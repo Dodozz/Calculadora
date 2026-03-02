@@ -269,12 +269,14 @@ body::after {
 .btn {
   position: relative;
   border: none;
-  border-radius: 20px;
+  border-radius: 50%;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   font-size: 18px;
   font-weight: 400;
   height: 62px;
+  width: 62px;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -421,12 +423,121 @@ body::after {
 
 .btn-zero {
   grid-column: span 2;
-  border-radius: 24px;
+  border-radius: 999px;
+  width: auto;
+  aspect-ratio: unset;
   justify-content: flex-start;
   padding-left: 24px;
 }
 
 .btn-dot { font-size: 24px; font-weight: 700; }
+.mem-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.btn-mem {
+  position: relative;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  height: 46px;
+  width: 46px;
+  aspect-ratio: 1;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  overflow: hidden;
+  transition:
+    transform .1s cubic-bezier(.22,1,.36,1),
+    box-shadow .15s ease,
+    background .15s ease;
+  background: rgba(20,200,180,.08);
+  border: 1px solid rgba(20,200,180,.18);
+  color: rgba(100,230,210,.85);
+  box-shadow: 0 2px 8px rgba(0,0,0,.2), inset 0 1px 0 rgba(20,200,180,.08);
+  text-shadow: 0 0 10px rgba(20,200,180,.35);
+  animation: btnEnter .65s cubic-bezier(.22,1,.36,1) both;
+}
+
+.btn-mem:nth-child(1) { animation-delay: .02s; }
+.btn-mem:nth-child(2) { animation-delay: .06s; }
+.btn-mem:nth-child(3) { animation-delay: .10s; }
+.btn-mem:nth-child(4) { animation-delay: .14s; }
+.btn-mem:nth-child(5) { animation-delay: .18s; }
+
+.btn-mem:hover {
+  background: rgba(20,200,180,.16);
+  box-shadow: 0 4px 16px rgba(20,200,180,.2), 0 0 0 1px rgba(20,200,180,.25);
+  transform: scale(1.08);
+}
+
+.btn-mem:active { transform: scale(.9); }
+
+.btn-mem.disabled {
+  opacity: .3;
+  cursor: default;
+  pointer-events: none;
+}
+
+.btn-mem::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 15%; right: 15%;
+  height: 1px;
+  background: rgba(20,200,180,.2);
+  border-radius: 1px;
+}
+
+.mem-dot {
+  position: absolute;
+  top: 14px; right: 12px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(20,200,180,.9);
+  box-shadow: 0 0 8px rgba(20,200,180,.7);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity .25s ease, transform .25s cubic-bezier(.22,1,.36,1);
+}
+
+.mem-dot.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+
+.btn-del {
+  background: rgba(250,140,50,.09);
+  border: 1px solid rgba(250,140,50,.2);
+  color: rgba(255,180,80,.88);
+  box-shadow: 0 2px 8px rgba(0,0,0,.2), inset 0 1px 0 rgba(250,140,50,.08);
+  text-shadow: 0 0 10px rgba(255,160,60,.35);
+  font-size: 16px;
+}
+
+.btn-del:hover {
+  background: rgba(250,140,50,.18);
+  box-shadow: 0 4px 16px rgba(250,120,30,.22), 0 0 0 1px rgba(250,140,50,.28);
+  transform: scale(1.08);
+}
+
+.mem-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(20,200,180,.12), transparent);
+  margin: 0 -4px 10px;
+}
+
 </style>
 </head>
 <body>
@@ -440,10 +551,19 @@ body::after {
     <div class="flash-overlay" id="flash"></div>
     <div class="display">
       <span class="label">CALC</span>
+      <div class="mem-dot" id="memDot"></div>
       <div class="expression" id="expr"></div>
       <div class="result"     id="result">0</div>
     </div>
     <div class="divider"></div>
+    <div class="mem-row">
+      <button class="btn-mem" data-action="mc">MC</button>
+      <button class="btn-mem" data-action="mr">MR</button>
+      <button class="btn-mem" data-action="mplus">M+</button>
+      <button class="btn-mem" data-action="mminus">M−</button>
+      <button class="btn-mem btn-del" data-action="del">⌫</button>
+    </div>
+    <div class="mem-divider"></div>
     <div class="grid">
       <button class="btn btn-fn"  data-action="clear"  >AC</button>
       <button class="btn btn-fn"  data-action="sign"   >+/−</button>
@@ -477,19 +597,19 @@ body::after {
   let W, H;
 
   const blobs = [
-    { x:.18, y:.18, r:.38, fx:0.00008, fy:0.00006, px:0,    py:0,    c:[80,30,220]  },
-    { x:.78, y:.72, r:.42, fx:0.00006, fy:0.00009, px:1.1,  py:0.9,  c:[30,80,240]  },
-    { x:.48, y:.88, r:.30, fx:0.00010, fy:0.00005, px:2.3,  py:1.7,  c:[0,140,230]  },
-    { x:.88, y:.12, r:.28, fx:0.00007, fy:0.00011, px:3.5,  py:2.8,  c:[120,60,250] },
-    { x:.08, y:.65, r:.32, fx:0.00005, fy:0.00007, px:4.7,  py:3.9,  c:[60,30,200]  },
-    { x:.55, y:.42, r:.22, fx:0.00012, fy:0.00008, px:5.9,  py:5.1,  c:[180,50,220] },
+    { x:.18, y:.18, r:.38, fx:0.22, fy:0.17, px:0,   py:0,   c:[80,30,220]  },
+    { x:.78, y:.72, r:.42, fx:0.16, fy:0.25, px:1.1, py:0.9, c:[30,80,240]  },
+    { x:.48, y:.88, r:.30, fx:0.28, fy:0.14, px:2.3, py:1.7, c:[0,140,230]  },
+    { x:.88, y:.12, r:.28, fx:0.19, fy:0.31, px:3.5, py:2.8, c:[120,60,250] },
+    { x:.08, y:.65, r:.32, fx:0.13, fy:0.20, px:4.7, py:3.9, c:[60,30,200]  },
+    { x:.55, y:.42, r:.22, fx:0.34, fy:0.23, px:5.9, py:5.1, c:[180,50,220] },
   ];
 
   const aurBands = [
-    { y:.25, h:.18, hue:270, spd:.000035, amp:.06, phase:0     },
-    { y:.45, h:.14, hue:220, spd:.000025, amp:.04, phase:1.2   },
-    { y:.62, h:.10, hue:300, spd:.000042, amp:.07, phase:2.5   },
-    { y:.20, h:.08, hue:200, spd:.000022, amp:.03, phase:0.8   },
+    { y:.25, h:.18, hue:270, spd:.09, amp:.06, phase:0   },
+    { y:.45, h:.14, hue:220, spd:.06, amp:.04, phase:1.2 },
+    { y:.62, h:.10, hue:300, spd:.11, amp:.07, phase:2.5 },
+    { y:.20, h:.08, hue:200, spd:.05, amp:.03, phase:0.8 },
   ];
 
   function resize(){
@@ -499,7 +619,7 @@ body::after {
   window.addEventListener('resize', resize);
   resize();
 
-  function drawBase(){
+  function drawBase(e){
     bx.clearRect(0, 0, W, H);
     const bgGrad = bx.createRadialGradient(W*.5, H*.5, 0, W*.5, H*.5, Math.max(W,H)*.75);
     bgGrad.addColorStop(0,   '#0a0818');
@@ -509,8 +629,8 @@ body::after {
     bx.fillRect(0, 0, W, H);
 
     blobs.forEach((b, i) => {
-      const px = (b.x + Math.sin(t * b.fx * 1000 + b.px) * 0.28) * W;
-      const py = (b.y + Math.cos(t * b.fy * 1000 + b.py) * 0.28) * H;
+      const px = (b.x + Math.sin(e * b.fx + b.px) * 0.28) * W;
+      const py = (b.y + Math.cos(e * b.fy + b.py) * 0.28) * H;
       const rx  = b.r * Math.min(W, H);
       const g   = bx.createRadialGradient(px, py, 0, px, py, rx);
       g.addColorStop(0,    `rgba(${b.c},0.28)`);
@@ -525,10 +645,10 @@ body::after {
 
     const stars = Math.floor(W * H / 3000);
     for(let s = 0; s < stars; s++){
-      const sx = (Math.sin(s * 127.1 + t * 0.000025) * 0.5 + 0.5) * W;
-      const sy = (Math.sin(s * 311.7 + t * 0.00002) * 0.5 + 0.5) * H;
+      const sx = (Math.sin(s * 127.1 + e * 0.0015) * 0.5 + 0.5) * W;
+      const sy = (Math.sin(s * 311.7 + e * 0.0012) * 0.5 + 0.5) * H;
       const sr = Math.sin(s * 43.5) * 0.5 + 0.8;
-      const sa = (Math.sin(s * 78.3 + t * 0.0002) * 0.5 + 0.5) * 0.55 + 0.1;
+      const sa = (Math.sin(s * 78.3 + e * 0.012) * 0.5 + 0.5) * 0.55 + 0.1;
       bx.beginPath();
       bx.arc(sx, sy, sr, 0, Math.PI * 2);
       bx.fillStyle = `rgba(200,190,255,${sa})`;
@@ -536,11 +656,11 @@ body::after {
     }
   }
 
-  function drawAurora(){
+  function drawAurora(e){
     ax.clearRect(0, 0, W, H);
 
     aurBands.forEach(band => {
-      const cy = (band.y + Math.sin(t * band.spd * 1000 + band.phase) * band.amp) * H;
+      const cy = (band.y + Math.sin(e * band.spd + band.phase) * band.amp) * H;
       const bh = band.h * H;
       const wavePoints = 80;
 
@@ -551,9 +671,9 @@ body::after {
       for(let i = 0; i <= wavePoints; i++){
         const xPos = (i / wavePoints) * W;
         const waveY = cy
-          + Math.sin(i * 0.08 + t * 0.00015 + band.phase)     * bh * 0.4
-          + Math.sin(i * 0.14 + t * 0.0001  + band.phase * 2) * bh * 0.25
-          + Math.sin(i * 0.22 + t * 0.00022 + band.phase * 3) * bh * 0.15;
+          + Math.sin(i * 0.08 + e * 0.09  + band.phase)     * bh * 0.4
+          + Math.sin(i * 0.14 + e * 0.06  + band.phase * 2) * bh * 0.25
+          + Math.sin(i * 0.22 + e * 0.13  + band.phase * 3) * bh * 0.15;
         ax.lineTo(xPos, waveY);
       }
 
@@ -562,7 +682,7 @@ body::after {
       ax.closePath();
 
       const aGrad = ax.createLinearGradient(0, cy - bh * 0.3, 0, cy + bh * 1.3);
-      const alpha = 0.06 + Math.sin(t * 0.000075 + band.phase) * 0.025;
+      const alpha = 0.06 + Math.sin(e * 0.045 + band.phase) * 0.025;
       aGrad.addColorStop(0,   `hsla(${band.hue},80%,70%,0)`);
       aGrad.addColorStop(0.3, `hsla(${band.hue},85%,65%,${alpha * 1.4})`);
       aGrad.addColorStop(0.6, `hsla(${band.hue + 30},75%,60%,${alpha})`);
@@ -577,9 +697,9 @@ body::after {
       for(let i = 0; i <= wavePoints; i++){
         const xPos = (i / wavePoints) * W;
         const waveY = cy
-          + Math.sin(i * 0.08 + t * 0.00015 + band.phase)     * bh * 0.4
-          + Math.sin(i * 0.14 + t * 0.0001  + band.phase * 2) * bh * 0.25
-          + Math.sin(i * 0.22 + t * 0.00022 + band.phase * 3) * bh * 0.15;
+          + Math.sin(i * 0.08 + e * 0.09  + band.phase)     * bh * 0.4
+          + Math.sin(i * 0.14 + e * 0.06  + band.phase * 2) * bh * 0.25
+          + Math.sin(i * 0.22 + e * 0.13  + band.phase * 3) * bh * 0.15;
         if(i === 0) ax.moveTo(xPos, waveY);
         else ax.lineTo(xPos, waveY);
       }
@@ -593,8 +713,8 @@ body::after {
 
     ax.filter = 'none';
 
-    const shimmerX = (Math.sin(t * 0.00004) * 0.5 + 0.5) * W;
-    const shimmerY = (Math.sin(t * 0.00003) * 0.5 + 0.5) * H;
+    const shimmerX = (Math.sin(e * 0.024) * 0.5 + 0.5) * W;
+    const shimmerY = (Math.sin(e * 0.018) * 0.5 + 0.5) * H;
     const shimmer  = ax.createRadialGradient(shimmerX, shimmerY, 0, shimmerX, shimmerY, Math.min(W,H) * 0.55);
     shimmer.addColorStop(0,   'rgba(140,90,255,0.06)');
     shimmer.addColorStop(0.5, 'rgba(60,100,255,0.03)');
@@ -603,17 +723,16 @@ body::after {
     ax.fillRect(0, 0, W, H);
   }
 
-  const TARGET_FPS = 60;
-  const FRAME_MS   = 1000 / TARGET_FPS;
-  let last = 0;
+  const FRAME_MS = 1000 / 60;
+  let lastTs = 0;
 
   function loop(ts){
     requestAnimationFrame(loop);
-    if(ts - last < FRAME_MS) return;
-    last = ts - ((ts - last) % FRAME_MS);
-    drawBase();
-    drawAurora();
-    t++;
+    if(ts - lastTs < FRAME_MS) return;
+    lastTs = ts - ((ts - lastTs) % FRAME_MS);
+    const e = ts * 0.001;
+    drawBase(e);
+    drawAurora(e);
   }
   requestAnimationFrame(loop);
 })();
@@ -690,6 +809,81 @@ document.querySelectorAll('.btn').forEach(btn => {
 });
 
 const display = document.getElementById('result');
+const memDot  = document.getElementById('memDot');
+let memory = null;
+
+function updateMemDot(){
+  memDot.classList.toggle('visible', memory !== null && memory !== 0);
+}
+
+function updateMemButtons(){
+  const hasVal = memory !== null && memory !== 0;
+  document.querySelector('[data-action="mc"]').classList.toggle('disabled', !hasVal);
+  document.querySelector('[data-action="mr"]').classList.toggle('disabled', !hasVal);
+}
+
+document.querySelectorAll('.btn-mem').forEach(btn => {
+  const rl = document.createElement('div');
+  rl.className = 'ripple-layer';
+  btn.appendChild(rl);
+
+  btn.addEventListener('pointerdown', e => {
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const size = Math.max(rect.width, rect.height) * 1.6;
+    const ring = document.createElement('div');
+    ring.className = 'ripple-ring';
+    ring.style.cssText = `width:${size}px;height:${size}px;left:${x-size/2}px;top:${y-size/2}px;
+      background:radial-gradient(circle,rgba(20,200,180,.4),transparent 68%);`;
+    rl.appendChild(ring);
+    ring.addEventListener('animationend', () => ring.remove());
+  });
+
+  btn.addEventListener('click', () => {
+    const { action } = btn.dataset;
+    const val = parseFloat(current);
+
+    if(action === 'mc'){
+      memory = null;
+      updateMemDot(); updateMemButtons();
+    }
+    else if(action === 'mr'){
+      if(memory !== null){
+        current = formatNum(memory);
+        resetNext = false;
+        updateDisplay(current, 'slide');
+        popExpr(lastExpr);
+      }
+    }
+    else if(action === 'mplus'){
+      memory = (memory || 0) + val;
+      updateMemDot(); updateMemButtons();
+      btn.style.transform = 'scale(1.18)';
+      setTimeout(() => btn.style.transform = '', 180);
+    }
+    else if(action === 'mminus'){
+      memory = (memory || 0) - val;
+      updateMemDot(); updateMemButtons();
+      btn.style.transform = 'scale(1.18)';
+      setTimeout(() => btn.style.transform = '', 180);
+    }
+    else if(action === 'del'){
+      if(!resetNext && current.length > 1){
+        current = current.slice(0, -1);
+        if(current === '-') current = '0';
+      } else {
+        current = '0';
+      }
+      updateDisplay(current, 'slide');
+      popExpr(lastExpr);
+      document.querySelector('[data-action="clear"]').textContent =
+        (current !== '0' || prev !== null) ? 'C' : 'AC';
+    }
+  });
+});
+
+updateMemButtons();
+
 const exprEl  = document.getElementById('expr');
 const flashEl = document.getElementById('flash');
 
@@ -698,24 +892,25 @@ let current = '0', prev = null, operator = null, resetNext = false, lastExpr = '
 function updateDisplay(val, mode = 'normal'){
   const len = String(val).length;
   display.classList.remove('sm','xs','bounce','slide','err');
-  void display.offsetWidth;
   if(len > 14)      display.classList.add('xs');
   else if(len > 9)  display.classList.add('sm');
-  if(mode === 'bounce') display.classList.add('bounce');
-  if(mode === 'slide')  display.classList.add('slide');
-  if(mode === 'err')    display.classList.add('err');
   display.textContent = val;
   const n = parseFloat(val);
   display.style.textShadow = (!isNaN(n) && isFinite(n) && n < 0)
     ? '0 0 30px rgba(248,113,113,.35)'
     : '0 0 30px rgba(160,130,255,.35)';
+  if(mode !== 'normal'){
+    requestAnimationFrame(() => {
+      const cls = mode === 'bounce' ? 'bounce' : mode === 'slide' ? 'slide' : 'err';
+      display.classList.add(cls);
+    });
+  }
 }
 
 function popExpr(text){
-  exprEl.textContent = text;
   exprEl.classList.remove('pop');
-  void exprEl.offsetWidth;
-  exprEl.classList.add('pop');
+  exprEl.textContent = text;
+  requestAnimationFrame(() => exprEl.classList.add('pop'));
 }
 
 function triggerFlash(){
@@ -734,7 +929,7 @@ function setActiveOp(op){
 function formatNum(n){
   if(isNaN(n))       return 'Error';
   if(!isFinite(n))   return n > 0 ? '∞' : '-∞';
-  return parseFloat(n.toPrecision(10)).toString();
+  return parseFloat(n.toPrecision(10)).toFixed(4);
 }
 
 function calc(a, b, op){
@@ -742,7 +937,7 @@ function calc(a, b, op){
     case '+': return a + b;
     case '−': return a - b;
     case '×': return a * b;
-    case '÷': return b === 0 ? NaN : a / b;
+    case '÷': if(b === 0){ setTimeout(() => window.open('https://i.pinimg.com/1200x/b2/ed/cd/b2edcd3538e60825bccb787a56ee2a9b.jpg', '_blank'), 400); return NaN; } return a / b;
     default:  return b;
   }
 }
