@@ -930,7 +930,10 @@ function setActiveOp(op){
 function formatNum(n){
   if(isNaN(n))       return 'Error';
   if(!isFinite(n))   return n > 0 ? '∞' : '-∞';
-  return parseFloat(n.toPrecision(10)).toFixed(4);
+  const s = parseFloat(n.toPrecision(10));
+  const str = String(s);
+  if(str.length > 12) return s.toExponential(4);
+  return str;
 }
 
 function calc(a, b, op){
