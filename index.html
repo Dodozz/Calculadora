@@ -938,7 +938,7 @@ function calc(a, b, op){
     case '+': return a + b;
     case '−': return a - b;
     case '×': return a * b;
-    case '÷': if(b === 0){ setTimeout(() => window.open('https://buzos.com.mx/noticia/por-que-no-se-puede-dividir-por-cero', '_blank'), 400); return NaN; } return a / b;
+    case '÷': if(b === 0){ setTimeout(() => window.location.href = 'https://buzos.com.mx/noticia/por-que-no-se-puede-dividir-por-cero', 400); return NaN; } return a / b;
     default:  return b;
   }
 }
